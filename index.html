@@ -112,10 +112,11 @@
 </head>
 <body>
 <!-- DIGITAL LOCK -->
-<div id="digitalLockScreen" style="position:fixed;inset:0;background:#0f172a;color:#fff;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;text-align:center;padding:24px;">
+<div id="digitalLockScreen" style="position:fixed;inset:0;background:#0f172a;color:#fff;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;text-align:center;padding:24px;">
   <div style="font-size:56px;">🔒</div>
   <div id="digitalLockMsg" style="font-size:15px;max-width:280px;line-height:1.4;">Carregando...</div>
   <button id="digitalLockBtn" style="padding:14px 30px;font-size:16px;border-radius:12px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-weight:600;">Desbloquear</button>
+  <button id="skipDigitalBtn" style="margin-top:6px;padding:8px 16px;font-size:13px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#cbd5e1;cursor:pointer;">Usar senha em vez disso</button>
 </div>
 <script>
 (function(){
@@ -123,8 +124,13 @@
   var overlay = document.getElementById('digitalLockScreen');
   var msg = document.getElementById('digitalLockMsg');
   var btn = document.getElementById('digitalLockBtn');
+  var skipBtn = document.getElementById('skipDigitalBtn');
 
   function unlock(){ overlay.style.display = 'none'; }
+  skipBtn.onclick = unlock; // sempre disponível: cai na tela de senha
+
+  // Se qualquer coisa der erro inesperado no app, nunca trava em branco: libera a tela de senha
+  window.addEventListener('error', function(){ unlock(); });
 
   function b64urlToBuf(b64url){
     var b64 = b64url.replace(/-/g,'+').replace(/_/g,'/');
@@ -141,63 +147,82 @@
   }
 
   function register(){
-    msg.textContent = 'Cadastrando sua digital...';
-    var challenge = crypto.getRandomValues(new Uint8Array(32));
-    var userId = crypto.getRandomValues(new Uint8Array(16));
-    navigator.credentials.create({
-      publicKey: {
-        challenge: challenge,
-        rp: { name: 'Apps do Claudio' },
-        user: { id: userId, name: 'claudio', displayName: 'Claudio' },
-        pubKeyCredParams: [{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
-        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
-        timeout: 60000,
-        attestation: 'none'
-      }
-    }).then(function(cred){
-      localStorage.setItem(LOCK_KEY, bufToB64url(cred.rawId));
-      unlock();
-    }).catch(function(e){
-      msg.textContent = 'Não foi possível cadastrar. Toque para tentar de novo.';
-      console.error(e);
-    });
+    try{
+      msg.textContent = 'Cadastrando sua digital...';
+      var challenge = crypto.getRandomValues(new Uint8Array(32));
+      var userId = crypto.getRandomValues(new Uint8Array(16));
+      navigator.credentials.create({
+        publicKey: {
+          challenge: challenge,
+          rp: { name: 'Apps do Claudio' },
+          user: { id: userId, name: 'claudio', displayName: 'Claudio' },
+          pubKeyCredParams: [{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000,
+          attestation: 'none'
+        }
+      }).then(function(cred){
+        localStorage.setItem(LOCK_KEY, bufToB64url(cred.rawId));
+        unlock();
+      }).catch(function(e){
+        msg.textContent = 'Não foi possível usar a digital. Toque em "Usar senha" abaixo.';
+        console.error(e);
+      });
+    }catch(e){
+      msg.textContent = 'Digital não disponível neste navegador. Toque em "Usar senha" abaixo.';
+    }
   }
 
   function authenticate(credId){
-    msg.textContent = 'Toque no sensor de digital...';
-    var challenge = crypto.getRandomValues(new Uint8Array(32));
-    navigator.credentials.get({
-      publicKey: {
-        challenge: challenge,
-        allowCredentials: [{ id: b64urlToBuf(credId), type: 'public-key' }],
-        userVerification: 'required',
-        timeout: 60000
-      }
-    }).then(function(){ unlock(); })
-    .catch(function(e){
-      msg.textContent = 'Digital não reconhecida. Toque para tentar de novo.';
-      console.error(e);
-    });
+    try{
+      msg.textContent = 'Toque no sensor de digital...';
+      var challenge = crypto.getRandomValues(new Uint8Array(32));
+      navigator.credentials.get({
+        publicKey: {
+          challenge: challenge,
+          allowCredentials: [{ id: b64urlToBuf(credId), type: 'public-key' }],
+          userVerification: 'required',
+          timeout: 60000
+        }
+      }).then(function(){ unlock(); })
+      .catch(function(e){
+        msg.textContent = 'Digital não reconhecida. Toque em "Usar senha" abaixo.';
+        console.error(e);
+      });
+    }catch(e){
+      msg.textContent = 'Digital não disponível neste navegador. Toque em "Usar senha" abaixo.';
+    }
   }
 
   function init(){
-    if (!window.PublicKeyCredential){
-      msg.textContent = 'Navegador sem suporte a digital. Acesso liberado.';
-      setTimeout(unlock, 1200);
-      return;
-    }
-    var credId = localStorage.getItem(LOCK_KEY);
-    if (credId){
-      msg.textContent = 'Toque para desbloquear com sua digital';
-      btn.textContent = 'Desbloquear';
-      btn.onclick = function(){ authenticate(credId); };
-    } else {
-      msg.textContent = 'Cadastre sua digital para proteger este app';
-      btn.textContent = 'Cadastrar digital';
-      btn.onclick = register;
+    try{
+      if (!window.PublicKeyCredential || !navigator.credentials){
+        msg.textContent = 'Navegador sem suporte a digital. Acesso liberado.';
+        setTimeout(unlock, 1000);
+        return;
+      }
+      var credId = localStorage.getItem(LOCK_KEY);
+      if (credId){
+        msg.textContent = 'Toque para desbloquear com sua digital';
+        btn.textContent = 'Desbloquear';
+        btn.onclick = function(){ authenticate(credId); };
+      } else {
+        msg.textContent = 'Cadastre sua digital para proteger este app';
+        btn.textContent = 'Cadastrar digital';
+        btn.onclick = register;
+      }
+    }catch(e){
+      unlock();
     }
   }
   init();
+
+  // Segurança extra: se em 8s nada aconteceu, libera a tela de senha sozinho
+  setTimeout(function(){
+    if(overlay.style.display !== 'none' && msg.textContent === 'Carregando...'){
+      unlock();
+    }
+  }, 8000);
 })();
 </script>
 <!-- FIM DIGITAL LOCK -->
