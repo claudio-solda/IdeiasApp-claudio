@@ -1,0 +1,25 @@
+{
+  "name": "Ideias App - Claudio",
+  "short_name": "Ideias App",
+  "description": "Registro de ideias e funcionalidades para os apps do Claudio",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1F3864",
+  "theme_color": "#1F3864",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
