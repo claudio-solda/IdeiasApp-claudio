@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ideias App</title>
+<style>
+  :root{
+    --navy:#1F3864; --blue:#2E75B6; --light:#EEF3FA; --green:#2E8B57;
+    --amber:#C9930C; --red:#C0392B; --gray:#5b5b5b; --card:#ffffff;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg,#f4f7fb 0%,#e9eef5 100%);
+    color:#222; padding-bottom:90px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--blue));
+    color:#fff; padding:22px 18px 26px; text-align:center;
+    border-radius:0 0 22px 22px; box-shadow:0 4px 14px rgba(0,0,0,.15);
+  }
+  header h1{margin:0; font-size:22px; letter-spacing:.5px;}
+  header p{margin:4px 0 0; font-size:12px; opacity:.85;}
+
+  .wrap{padding:14px;}
+
+  .filters{display:flex; gap:8px; overflow-x:auto; padding:12px 4px; margin-bottom:6px;}
+  .chip{
+    flex:0 0 auto; padding:7px 14px; border-radius:20px; background:#fff;
+    border:1px solid #d8e0ea; font-size:12.5px; color:var(--navy); white-space:nowrap;
+  }
+  .chip.active{background:var(--blue); color:#fff; border-color:var(--blue);}
+
+  .card{
+    background:var(--card); border-radius:14px; padding:14px; margin-bottom:10px;
+    box-shadow:0 2px 8px rgba(20,40,80,.08); border-left:5px solid var(--blue);
+  }
+  .card.status-feito{border-left-color:var(--green); opacity:.75;}
+  .card.status-andamento{border-left-color:var(--amber);}
+  .card.status-ideia{border-left-color:var(--blue);}
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .card-app{font-size:11px; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:.4px;}
+  .card-title{font-size:16px; font-weight:700; margin:3px 0 4px; color:#1a1a1a;}
+  .card-desc{font-size:13.5px; color:#444; line-height:1.4; margin:0 0 8px;}
+  .card-meta{display:flex; gap:6px; flex-wrap:wrap;}
+  .tag{font-size:10.5px; padding:3px 9px; border-radius:12px; font-weight:600;}
+  .tag.prio-alta{background:#fbe1de; color:var(--red);}
+  .tag.prio-media{background:#fdf1d6; color:var(--amber);}
+  .tag.prio-baixa{background:#e3eef7; color:var(--blue);}
+  .tag.st-ideia{background:#e3eef7; color:var(--blue);}
+  .tag.st-andamento{background:#fdf1d6; color:var(--amber);}
+  .tag.st-feito{background:#dcefe1; color:var(--green);}
+  .card-actions{display:flex; gap:14px; margin-top:10px;}
+  .card-actions button{
+    border:none; background:none; font-size:12.5px; color:var(--gray);
+    padding:4px 0; font-weight:600;
+  }
+  .card-actions button.del{color:var(--red);}
+
+  .empty{text-align:center; color:#8a93a3; padding:50px 20px; font-size:14px;}
+
+  .fab{
+    position:fixed; bottom:22px; right:20px; width:58px; height:58px; border-radius:50%;
+    background:linear-gradient(135deg,var(--blue),var(--navy)); color:#fff; font-size:30px;
+    border:none; box-shadow:0 6px 16px rgba(30,60,110,.4); z-index:20;
+  }
+  .share-fab{
+    position:fixed; bottom:22px; left:20px; width:50px; height:50px; border-radius:50%;
+    background:#25D366; color:#fff; font-size:22px; border:none;
+    box-shadow:0 6px 16px rgba(0,0,0,.2); z-index:20;
+  }
+
+  .modal-bg{
+    display:none; position:fixed; inset:0; background:rgba(10,20,40,.5); z-index:30;
+    align-items:flex-end; justify-content:center;
+  }
+  .modal-bg.open{display:flex;}
+  .modal{
+    background:#fff; width:100%; max-width:480px; border-radius:20px 20px 0 0;
+    padding:20px 18px 24px; max-height:88vh; overflow-y:auto;
+  }
+  .modal h2{margin:0 0 14px; font-size:18px; color:var(--navy);}
+  label{font-size:12px; font-weight:700; color:var(--gray); display:block; margin:12px 0 5px;}
+  input,textarea,select{
+    width:100%; padding:11px 12px; border-radius:10px; border:1px solid #d5dce6;
+    font-size:14.5px; font-family:inherit; background:#f9fbfd;
+  }
+  textarea{resize:vertical; min-height:70px;}
+  .row2{display:flex; gap:10px;}
+  .row2 > div{flex:1;}
+  .modal-actions{display:flex; gap:10px; margin-top:18px;}
+  .modal-actions button{
+    flex:1; padding:13px; border-radius:12px; border:none; font-size:14.5px; font-weight:700;
+  }
+  .btn-cancel{background:#eef1f5; color:#555;}
+  .btn-save{background:var(--blue); color:#fff;}
+
+  .lock-screen{
+    position:fixed; inset:0; background:linear-gradient(135deg,var(--navy),var(--blue));
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; z-index:50; gap:14px;
+  }
+  .lock-screen input{width:220px; text-align:center; font-size:18px; letter-spacing:3px;}
+  .lock-screen button{padding:11px 26px; border-radius:10px; border:none; background:#fff; color:var(--navy); font-weight:700;}
+  .lock-err{font-size:12px; color:#ffd6d6; height:16px;}
+</style>
+</head>
+<body>
+<!-- DIGITAL LOCK -->
+<div id="digitalLockScreen" style="position:fixed;inset:0;background:#0f172a;color:#fff;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;text-align:center;padding:24px;">
+  <div style="font-size:56px;">🔒</div>
+  <div id="digitalLockMsg" style="font-size:15px;max-width:280px;line-height:1.4;">Carregando...</div>
+  <button id="digitalLockBtn" style="padding:14px 30px;font-size:16px;border-radius:12px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-weight:600;">Desbloquear</button>
+</div>
+<script>
+(function(){
+  var LOCK_KEY = 'claudio_digital_cred_id';
+  var overlay = document.getElementById('digitalLockScreen');
+  var msg = document.getElementById('digitalLockMsg');
+  var btn = document.getElementById('digitalLockBtn');
+
+  function unlock(){ overlay.style.display = 'none'; }
+
+  function b64urlToBuf(b64url){
+    var b64 = b64url.replace(/-/g,'+').replace(/_/g,'/');
+    var pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
+    var bin = atob(b64+pad);
+    var buf = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+    return buf;
+  }
+  function bufToB64url(buf){
+    var bin=''; var bytes = new Uint8Array(buf);
+    for (var i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+
+  function register(){
+    msg.textContent = 'Cadastrando sua digital...';
+    var challenge = crypto.getRandomValues(new Uint8Array(32));
+    var userId = crypto.getRandomValues(new Uint8Array(16));
+    navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'Apps do Claudio' },
+        user: { id: userId, name: 'claudio', displayName: 'Claudio' },
+        pubKeyCredParams: [{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        timeout: 60000,
+        attestation: 'none'
+      }
+    }).then(function(cred){
+      localStorage.setItem(LOCK_KEY, bufToB64url(cred.rawId));
+      unlock();
+    }).catch(function(e){
+      msg.textContent = 'Não foi possível cadastrar. Toque para tentar de novo.';
+      console.error(e);
+    });
+  }
+
+  function authenticate(credId){
+    msg.textContent = 'Toque no sensor de digital...';
+    var challenge = crypto.getRandomValues(new Uint8Array(32));
+    navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        allowCredentials: [{ id: b64urlToBuf(credId), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    }).then(function(){ unlock(); })
+    .catch(function(e){
+      msg.textContent = 'Digital não reconhecida. Toque para tentar de novo.';
+      console.error(e);
+    });
+  }
+
+  function init(){
+    if (!window.PublicKeyCredential){
+      msg.textContent = 'Navegador sem suporte a digital. Acesso liberado.';
+      setTimeout(unlock, 1200);
+      return;
+    }
+    var credId = localStorage.getItem(LOCK_KEY);
+    if (credId){
+      msg.textContent = 'Toque para desbloquear com sua digital';
+      btn.textContent = 'Desbloquear';
+      btn.onclick = function(){ authenticate(credId); };
+    } else {
+      msg.textContent = 'Cadastre sua digital para proteger este app';
+      btn.textContent = 'Cadastrar digital';
+      btn.onclick = register;
+    }
+  }
+  init();
+})();
+</script>
+<!-- FIM DIGITAL LOCK -->
+
+<div class="lock-screen" id="lockScreen">
+  <div style="font-size:38px;">💡</div>
+  <div style="font-weight:700; font-size:18px;">Ideias App</div>
+  <input type="password" id="pwInput" placeholder="Senha" autofocus>
+  <div class="lock-err" id="lockErr"></div>
+  <button onclick="tryUnlock()">Entrar</button>
+</div>
+
+<div id="mainApp" style="display:none;">
+  <header>
+    <h1>💡 Ideias App</h1>
+    <p>Funcionalidades e melhorias dos seus apps</p>
+  </header>
+
+  <div class="wrap">
+    <div class="filters" id="appFilters"></div>
+    <div class="filters" id="statusFilters">
+      <div class="chip active" data-status="todos">Todos status</div>
+      <div class="chip" data-status="ideia">💭 Ideia</div>
+      <div class="chip" data-status="andamento">⚙️ Andamento</div>
+      <div class="chip" data-status="feito">✅ Feito</div>
+    </div>
+
+    <div id="list"></div>
+  </div>
+</div>
+
+<button class="fab" onclick="openModal()">+</button>
+<button class="share-fab" onclick="shareList()">📲</button>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Nova ideia</h2>
+    <label>App</label>
+    <input list="appList" id="fApp" placeholder="Ex: Relatoriosolda, BomDia, Gastos...">
+    <datalist id="appList"></datalist>
+
+    <label>Título da ideia</label>
+    <input id="fTitle" placeholder="Ex: Adicionar gráfico de produção">
+
+    <label>Descrição</label>
+    <textarea id="fDesc" placeholder="Detalhe a funcionalidade..."></textarea>
+
+    <div class="row2">
+      <div>
+        <label>Prioridade</label>
+        <select id="fPrio">
+          <option value="alta">Alta</option>
+          <option value="media" selected>Média</option>
+          <option value="baixa">Baixa</option>
+        </select>
+      </div>
+      <div>
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="ideia" selected>Ideia</option>
+          <option value="andamento">Em andamento</option>
+          <option value="feito">Feito</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveIdea()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PASSWORD = "Cacau249";
+const STORAGE_KEY = "ideias_app_data_v1";
+let ideas = [];
+let editingId = null;
+let filterApp = "todos";
+let filterStatus = "todos";
+
+function tryUnlock(){
+  const val = document.getElementById('pwInput').value;
+  if(val === PASSWORD){
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    loadData();
+    render();
+  } else {
+    document.getElementById('lockErr').textContent = 'Senha incorreta';
+  }
+}
+document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter') tryUnlock(); });
+
+// Quando a digital libera o app (ou se o navegador não suportar), pula direto pro app
+(function(){
+  var lockScreen = document.getElementById('digitalLockScreen');
+  var observer = new MutationObserver(function(){
+    if(lockScreen.style.display === 'none'){
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      loadData();
+      render();
+      observer.disconnect();
+    }
+  });
+  observer.observe(lockScreen, { attributes: true, attributeFilter: ['style'] });
+})();
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    ideas = raw ? JSON.parse(raw) : [];
+  }catch(e){ ideas = []; }
+}
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
+}
+
+function uniqueApps(){
+  const set = new Set(ideas.map(i => i.app).filter(Boolean));
+  return Array.from(set).sort();
+}
+
+function renderFilters(){
+  const apps = uniqueApps();
+  const container = document.getElementById('appFilters');
+  container.innerHTML = '';
+  const allChip = document.createElement('div');
+  allChip.className = 'chip' + (filterApp === 'todos' ? ' active' : '');
+  allChip.textContent = 'Todos apps';
+  allChip.onclick = () => { filterApp = 'todos'; render(); };
+  container.appendChild(allChip);
+  apps.forEach(a => {
+    const c = document.createElement('div');
+    c.className = 'chip' + (filterApp === a ? ' active' : '');
+    c.textContent = a;
+    c.onclick = () => { filterApp = a; render(); };
+    container.appendChild(c);
+  });
+
+  document.querySelectorAll('#statusFilters .chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.status === filterStatus);
+    chip.onclick = () => { filterStatus = chip.dataset.status; render(); };
+  });
+
+  const datalist = document.getElementById('appList');
+  datalist.innerHTML = apps.map(a => `<option value="${escapeHtml(a)}">`).join('');
+}
+
+function escapeHtml(s){
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const prioLabel = {alta:'Alta prioridade', media:'Média prioridade', baixa:'Baixa prioridade'};
+const statusLabel = {ideia:'💭 Ideia', andamento:'⚙️ Andamento', feito:'✅ Feito'};
+
+function render(){
+  renderFilters();
+  const list = document.getElementById('list');
+  let filtered = ideas.filter(i =>
+    (filterApp === 'todos' || i.app === filterApp) &&
+    (filterStatus === 'todos' || i.status === filterStatus)
+  );
+  filtered.sort((a,b) => {
+    const order = {alta:0, media:1, baixa:2};
+    return order[a.prio] - order[b.prio];
+  });
+
+  if(filtered.length === 0){
+    list.innerHTML = '<div class="empty">Nenhuma ideia registrada ainda.<br>Toque no + para adicionar.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(i => `
+    <div class="card status-${i.status}">
+      <div class="card-top">
+        <div>
+          <div class="card-app">${escapeHtml(i.app || 'Sem app')}</div>
+          <div class="card-title">${escapeHtml(i.title)}</div>
+        </div>
+      </div>
+      ${i.desc ? `<p class="card-desc">${escapeHtml(i.desc)}</p>` : ''}
+      <div class="card-meta">
+        <span class="tag prio-${i.prio}">${prioLabel[i.prio]}</span>
+        <span class="tag st-${i.status}">${statusLabel[i.status]}</span>
+      </div>
+      <div class="card-actions">
+        <button onclick="editIdea('${i.id}')">✏️ Editar</button>
+        <button onclick="cycleStatus('${i.id}')">🔄 Mudar status</button>
+        <button class="del" onclick="deleteIdea('${i.id}')">🗑️ Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function cycleStatus(id){
+  const order = ['ideia','andamento','feito'];
+  const idea = ideas.find(i => i.id === id);
+  if(!idea) return;
+  const next = order[(order.indexOf(idea.status) + 1) % order.length];
+  idea.status = next;
+  saveData();
+  render();
+}
+
+function openModal(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Nova ideia';
+  document.getElementById('fApp').value = '';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fDesc').value = '';
+  document.getElementById('fPrio').value = 'media';
+  document.getElementById('fStatus').value = 'ideia';
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modalBg').classList.remove('open');
+}
+function editIdea(id){
+  const idea = ideas.find(i => i.id === id);
+  if(!idea) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar ideia';
+  document.getElementById('fApp').value = idea.app;
+  document.getElementById('fTitle').value = idea.title;
+  document.getElementById('fDesc').value = idea.desc;
+  document.getElementById('fPrio').value = idea.prio;
+  document.getElementById('fStatus').value = idea.status;
+  document.getElementById('modalBg').classList.add('open');
+}
+function deleteIdea(id){
+  if(!confirm('Excluir essa ideia?')) return;
+  ideas = ideas.filter(i => i.id !== id);
+  saveData();
+  render();
+}
+function saveIdea(){
+  const title = document.getElementById('fTitle').value.trim();
+  if(!title){ alert('Digite um título para a ideia'); return; }
+  const data = {
+    app: document.getElementById('fApp').value.trim() || 'Sem app',
+    title: title,
+    desc: document.getElementById('fDesc').value.trim(),
+    prio: document.getElementById('fPrio').value,
+    status: document.getElementById('fStatus').value,
+  };
+  if(editingId){
+    const idx = ideas.findIndex(i => i.id === editingId);
+    ideas[idx] = {...ideas[idx], ...data};
+  } else {
+    ideas.push({id: 'id_' + Date.now(), ...data});
+  }
+  saveData();
+  closeModal();
+  render();
+}
+
+function shareList(){
+  let filtered = ideas.filter(i =>
+    (filterApp === 'todos' || i.app === filterApp) &&
+    (filterStatus === 'todos' || i.status === filterStatus)
+  );
+  if(filtered.length === 0){ alert('Nenhuma ideia para compartilhar'); return; }
+  let text = '💡 *Ideias App*\n\n';
+  const byApp = {};
+  filtered.forEach(i => { (byApp[i.app] = byApp[i.app] || []).push(i); });
+  Object.keys(byApp).sort().forEach(app => {
+    text += `*${app}*\n`;
+    byApp[app].forEach(i => {
+      text += `${statusLabel[i.status]} ${i.title} (${prioLabel[i.prio]})\n`;
+    });
+    text += '\n';
+  });
+  const url = 'https://wa.me/?text=' + encodeURIComponent(text);
+  window.open(url, '_blank');
+}
+
+document.getElementById('modalBg').addEventListener('click', e => {
+  if(e.target.id === 'modalBg') closeModal();
+});
+</script>
+</body>
+</html>
