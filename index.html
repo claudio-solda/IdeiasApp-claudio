@@ -332,9 +332,25 @@ function saveData(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
 }
 
+const KNOWN_APPS = [
+  'Relatoriosolda',
+  'BomDia-claudio',
+  'BoaNoite-claudio',
+  'BoaTarde-claudio',
+  'Gastos---claudio',
+  'Gastos-priscila',
+  'painel-lideranca',
+  'louvores-claudio',
+  'jornada-naruto',
+  'livro-kimberly',
+  'livro-miguel',
+  'apostilas-daxus',
+  'IdeiasApp-claudio',
+];
+
 function uniqueApps(){
-  const set = new Set(ideas.map(i => i.app).filter(Boolean));
-  return Array.from(set).sort();
+  const set = new Set([...KNOWN_APPS, ...ideas.map(i => i.app).filter(Boolean)]);
+  return Array.from(set).sort((a,b) => a.localeCompare(b));
 }
 
 function renderFilters(){
