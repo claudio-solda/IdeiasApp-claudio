@@ -327,6 +327,48 @@ function loadData(){
     const raw = localStorage.getItem(STORAGE_KEY);
     ideas = raw ? JSON.parse(raw) : [];
   }catch(e){ ideas = []; }
+  seedBuiltApps();
+}
+
+const SEED_FLAG = 'ideias_seed_apps_v1_done';
+const SEED_APPS = [
+  {app:'Relatoriosolda', title:'Relatório de turno de solda', desc:'App principal do dia a dia: registro do relatório de turno de solda por resistência.'},
+  {app:'BomDia-claudio', title:'Mensagem de Bom Dia', desc:'App que gera mensagem/cena de Bom Dia.'},
+  {app:'BoaTarde-claudio', title:'Mensagem de Boa Tarde', desc:'App que gera mensagem/cena de Boa Tarde para Claudio, Irmão Claudio, Kimberly e Priscila.'},
+  {app:'BoaNoite-claudio', title:'Mensagem de Boa Noite', desc:'App que gera mensagem/cena de Boa Noite.'},
+  {app:'Gastos---claudio', title:'Controle de gastos pessoais', desc:'App de gastos pessoal do Claudio.'},
+  {app:'Gastos-priscila', title:'Controle de gastos da Priscila', desc:'App de gastos pessoal da Priscila.'},
+  {app:'painel-lideranca', title:'Painel de gestão e liderança', desc:'Painel de Gestão e Liderança (OEE).'},
+  {app:'louvores-claudio', title:'Letras de louvor', desc:'Letras de louvor para cantar na igreja (IJEFONT).'},
+  {app:'jornada-naruto', title:'Livro da jornada do Naruto', desc:'Presente temático de Naruto feito para o amigo Anderson.'},
+  {app:'livro-kimberly', title:'Livro de fotos da Kimberly', desc:'App pessoal de livro de fotos.'},
+  {app:'livro-miguel', title:'Livro de fotos do Miguel', desc:'App pessoal de livro de fotos.'},
+  {app:'apostilas-daxus', title:'Apostilas e certificados', desc:'App para guardar apostilas e certificados da Daxus.'},
+  {app:'brigadista-claudio', title:'Anotações do curso de brigadista', desc:'App que grava a aula do curso de brigadista e gera resumo.'},
+  {app:'EstudoBiblico-claudio', title:'Estudo bíblico', desc:'Resumo dos 5 livros, parashiot semanais e mandamentos.'},
+  {app:'Remedios.com', title:'Remédios e Pix de reembolso', desc:'Controle de remédios comprados para a filha e do Pix de reembolso.'},
+  {app:'Treinamentos-solda', title:'Treinamentos de solda', desc:'Treinamentos e checklist de capacitação para operadores de solda por resistência.'},
+  {app:'cartola-credenciais', title:'Login do Cartola FC', desc:'Guarda e-mail e senha de acesso ao Cartola FC e lista de times com nome e e-mail.'},
+  {app:'niken-estoque', title:'Estoque e ordens de produção', desc:'Gestão de estoque e ordens de produção da NIKEN.'},
+];
+
+function seedBuiltApps(){
+  if(localStorage.getItem(SEED_FLAG)) return;
+  SEED_APPS.forEach(function(seed, idx){
+    const exists = ideas.some(i => i.app === seed.app && i.title === seed.title);
+    if(!exists){
+      ideas.push({
+        id: 'seed_' + idx + '_' + Date.now(),
+        app: seed.app,
+        title: seed.title,
+        desc: seed.desc,
+        prio: 'baixa',
+        status: 'feito',
+      });
+    }
+  });
+  localStorage.setItem(SEED_FLAG, '1');
+  saveData();
 }
 function saveData(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
@@ -345,6 +387,12 @@ const KNOWN_APPS = [
   'livro-kimberly',
   'livro-miguel',
   'apostilas-daxus',
+  'brigadista-claudio',
+  'EstudoBiblico-claudio',
+  'Remedios.com',
+  'Treinamentos-solda',
+  'cartola-credenciais',
+  'niken-estoque',
   'IdeiasApp-claudio',
 ];
 
